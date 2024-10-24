@@ -1,0 +1,31 @@
+name: Deploy Static Site
+
+on:
+  push:
+    branches:
+      - main  
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Add server to known hosts
+        run: |
+          ssh-keyscan -H 64.225.60.220 >> ~/.ssh/known_hosts
+
+      - name: Sync Files
+        run: |
+          rsync -avz --delete ./ root@64.225.60.220:/var/www/html
+        env:
+          RSYNC_RSH: 'ssh -p 22 -o StrictHostKeyChecking=no'
+
